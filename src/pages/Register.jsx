@@ -1,5 +1,4 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function Register() {
@@ -11,18 +10,36 @@ function Register() {
 
   const handleRegister = async () => {
     setLoading(true);
-    setError(""); // Очистить старую ошибку перед новой попыткой регистрации
+    setError("");
 
     try {
-      const response = await axios.post("http://localhost:7070/api/students/register", {
-        email,
-        password,
+      const response = await fetch("http://localhost:7070/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
-      alert("Registration successful");
-      navigate("/home");
+
+      let responseData;
+      const contentType = response.headers.get("Content-Type");
+
+      // Проверяем, JSON ли вернул сервер
+      if (contentType && contentType.includes("application/json")) {
+        responseData = await response.json();
+      } else {
+        responseData = await response.text();
+      }
+
+      if (!response.ok) {
+        throw new Error(responseData.error || responseData || "Registration failed");
+      }
+
+      console.log("Регистрация успешна:", responseData);
+      navigate("/home"); // Перенаправление на страницу home после успешной регистрации
     } catch (error) {
-      setError(error.response ? error.response.data : "Registration failed");
-      console.error("Registration failed:", error.response ? error.response.data : error.message);
+      console.error("Ошибка регистрации:", error.message);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -30,12 +47,12 @@ function Register() {
 
   return (
     <div className="register-container">
-      {/* Логотип вверху */}
+      {/* Логотип */}
       <div className="logo-container flex justify-center">
         <img
           src="/Ala-too_International_University_Seal.png"
           alt="Ala-Too Logo"
-          className="w-24 h-24" // Вы можете изменить размер логотипа, например, на 96x96 (w-24 h-24)
+          className="w-24 h-24"
         />
       </div>
 

@@ -1,60 +1,69 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Login = ({ onLogin }) => {
+const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async () => {
     try {
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const fakeToken = "yourAuthToken"; 
-      localStorage.setItem("token", fakeToken);
-      onLogin?.(email, password);
-      navigate('/profile');
+      const response = await fetch("http://localhost:7070/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to login");
+      }
+  
+      const data = await response.json();
+      localStorage.setItem("token", data.token);  // Save the token here
+      navigate("/home");  // Redirect to profile or home page
     } catch (error) {
-      alert("Login failed");
-    } finally {
-      setIsLoading(false);
+      console.error("Login failed:", error);
+      setError("Invalid credentials");
     }
   };
-
+  
   return (
     <div className="login-container">
-      {/* Логотип вверху */}
       <div className="logo-container flex justify-center">
         <img
           src="/Ala-too_International_University_Seal.png"
           alt="Ala-Too Logo"
-          className="w-24 h-24" // Размер логотипа
+          className="w-24 h-24"
         />
       </div>
 
       <h2>Login</h2>
-      <input 
-        type="email" 
-        placeholder="Enter your email" 
-        value={email} 
-        onChange={e => setEmail(e.target.value)} 
+
+      {error && <div className="error-message">{error}</div>}
+
+      <input
+        type="email"
+        placeholder="Enter your email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
 
-      <input 
-        type="password" 
-        placeholder="Enter your password" 
-        value={password} 
-        onChange={e => setPassword(e.target.value)} 
+      <input
+        type="password"
+        placeholder="Enter your password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
       />
-      
+
       <button onClick={handleLogin} disabled={isLoading}>
         {isLoading ? "Signing In..." : "Sign In"}
       </button>
-      
+
       <p>
-        Don’t have an account? <span onClick={() => navigate("/register")}>Register</span>
+        Don’t have an account?{" "}
+        <span onClick={() => navigate("/register")}>Register</span>
       </p>
     </div>
   );
